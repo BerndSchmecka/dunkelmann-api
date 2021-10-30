@@ -52,6 +52,14 @@ namespace DunkelmannAPI {
                                 rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
                             }
                             break;
+                        case "/ts5version":
+                            try {
+                                ts5version ver = new ts5version();
+                                rd = new ResponseData(response, await ver.getVersionInfo(), "application/json", 200);
+                            } catch (Exception ex) {
+                                rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
+                            }
+                            break;
                     }
                 } else if (request.HttpMethod == "OPTIONS"){
                     rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
