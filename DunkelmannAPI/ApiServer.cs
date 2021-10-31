@@ -3,6 +3,8 @@ using System.Net;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace DunkelmannAPI {
         public struct ResponseData {
@@ -25,15 +27,30 @@ namespace DunkelmannAPI {
     }
 
     class ApiServer {
-        private static HttpListener listener;
         private static string url = "http://*:8888/";
 
-        private async Task HandleInboundConnections() {
-            bool runServer = true;
+        private async Task Listen(string prefix, int maxConcurrentRequests, CancellationToken token){
+            HttpListener listener = new HttpListener();
+            listener.Prefixes.Add(prefix);
+            listener.Start();
 
-            while(runServer) {
-                HttpListenerContext context = await listener.GetContextAsync();
+            var requests = new HashSet<Task>();
+            for(int i=0; i < maxConcurrentRequests; i++)
+                requests.Add(listener.GetContextAsync());
 
+            while (!token.IsCancellationRequested){
+                Task t = await Task.WhenAny(requests);
+                requests.Remove(t);
+
+                if (t is Task<HttpListenerContext>){
+                    var context = (t as Task<HttpListenerContext>).Result;
+                    requests.Add(HandleInboundConnections(context));
+                    requests.Add(listener.GetContextAsync());
+                }
+            }
+        }
+
+        private async Task HandleInboundConnections(HttpListenerContext context) {
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
 
@@ -60,6 +77,22 @@ namespace DunkelmannAPI {
                                 rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
                             }
                             break;
+                        case "/status":
+                            try {
+                                status sta = new status();
+                                rd = new ResponseData(response, await sta.getServiceInfo(), "application/json", 200);
+                            } catch (Exception ex) {
+                                rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
+                            }
+                            break;
+                        case "/test":
+                            try {
+                                test tst = new test();
+                                rd = new ResponseData(response, tst.testAPI(), "application/json", 200);
+                            } catch (Exception ex) {
+                                rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
+                            }
+                            break;
                     }
                 } else if (request.HttpMethod == "OPTIONS"){
                     rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
@@ -71,18 +104,12 @@ namespace DunkelmannAPI {
                 
                 await response.OutputStream.WriteAsync(rd.Data, 0, rd.Data.Length);
                 response.Close();
-            }
         }
 
         public void StartServer(){
-            listener = new HttpListener();
-            listener.Prefixes.Add(url);
-            listener.Start();
-
-            Task listenTask = HandleInboundConnections();
+            CancellationToken token = new CancellationToken();
+            Task listenTask = Listen(url, 32, token);
             listenTask.GetAwaiter().GetResult();
-
-            listener.Close();
         }
     }
 }
