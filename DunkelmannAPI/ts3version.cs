@@ -11,12 +11,19 @@ namespace DunkelmannAPI {
 
         }
 
-        public async Task<string> getVersionInfo() {
+        public async Task<ResponseInfo> getVersionInfo() {
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(ts3_version_url);
             req.UserAgent = Program.displayableVersion;
             using (HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()) {
                 string responseStr = JsonConvert.SerializeObject(Serializer.Deserialize<VersionResponse>(resp.GetResponseStream()));
-                return responseStr;
+                
+            string lastModified = "";
+            try {
+                lastModified = resp.GetResponseHeader("Last-Modified");
+            } catch (System.Exception) {
+                lastModified = UtilMan.DateToHTTPFormat(Program.epoch);
+            }
+                return new ResponseInfo(lastModified, responseStr);
             }
         }
     }

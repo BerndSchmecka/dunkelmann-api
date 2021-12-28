@@ -9,6 +9,8 @@ namespace DunkelmannAPI
         public static DateTime buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
         public static string displayableVersion = null;
 
+        public static DateTime epoch = new System.DateTime(1970,1,1,0,0,0,DateTimeKind.Utc);
+
         static void Main(string[] args)
         {
             #if DEBUG

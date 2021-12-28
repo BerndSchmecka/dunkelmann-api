@@ -21,13 +21,13 @@ namespace DunkelmannAPI {
             serviceList.Add(new HTTPService("cloud", "https://cloud.dunkelmann.eu"));
         }
 
-        public async Task<string> getServiceInfo() {
+        public async Task<ResponseInfo> getServiceInfo() {
             List<StatusInfo> infoList = new List<StatusInfo>();
             foreach(Service svc in serviceList){
                 var status = await svc.checkService();
                 infoList.Add(new StatusInfo(svc.ServiceID, svc.URL, status.Item1, status.Item2));
             }
-            return JsonConvert.SerializeObject(infoList);
+            return new ResponseInfo(UtilMan.DateToHTTPFormat(DateTime.Now), JsonConvert.SerializeObject(infoList));
         }
     }
 

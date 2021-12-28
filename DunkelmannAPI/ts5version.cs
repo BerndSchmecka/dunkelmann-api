@@ -25,13 +25,21 @@ namespace DunkelmannAPI {
 
         }
 
-        public async Task<string> getVersionInfo() {
+        public async Task<ResponseInfo> getVersionInfo() {
             List<TS5PlatformInfo> list = new List<TS5PlatformInfo>();
             foreach(PlatformURL purl in ts5_version_urls){
                 list.Add(await getPlatformVersionInfo(purl.url, purl.platform_name));
             }
             TS5VersionResponse resp = new TS5VersionResponse(list);
-            return JsonConvert.SerializeObject(resp);
+
+            string lastModified = "";
+            try {
+                lastModified = list[0].lastModified;
+            } catch (System.Exception) {
+                lastModified = UtilMan.DateToHTTPFormat(Program.epoch);
+            }
+
+            return new ResponseInfo(lastModified, JsonConvert.SerializeObject(resp));
         }
 
         private async Task<TS5PlatformInfo> getPlatformVersionInfo(string platform_url, string platform_name) {
@@ -40,7 +48,7 @@ namespace DunkelmannAPI {
             req.Headers.Add("Authorization", "Basic dGVhbXNwZWFrNTpMRlo2Wl5rdkdyblh+YW4sJEwjNGd4TDMnYTcvYVtbJl83PmF0fUEzQVJSR1k=");
             using (HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()) {
                 using (StreamReader sr = new StreamReader(resp.GetResponseStream())){
-                    TS5PlatformInfo response = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await sr.ReadToEndAsync()), platform_name);
+                    TS5PlatformInfo response = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await sr.ReadToEndAsync()), platform_name, resp.GetResponseHeader("Last-Modified"));
                     return response;
                 }
             }
@@ -58,10 +66,12 @@ namespace DunkelmannAPI {
     public class TS5PlatformInfo {
         public string platformName {get; set;}
         public TS5VersionInfo platformInfo {get; set;}
+        public string lastModified {get; set;}
 
-        public TS5PlatformInfo(TS5VersionInfo info, string name) {
+        public TS5PlatformInfo(TS5VersionInfo info, string name, string lastModified) {
             this.platformInfo = info;
             this.platformName = name;
+            this.lastModified = lastModified;
         }
     }
 

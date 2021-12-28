@@ -1,9 +1,10 @@
+using System;
 using Newtonsoft.Json;
 
 namespace DunkelmannAPI {
     class test {
-        public string testAPI(){
-            return JsonConvert.SerializeObject(new test_response("If you can see this text, this API works!"));
+        public ResponseInfo testAPI(){
+            return new ResponseInfo(UtilMan.DateToHTTPFormat(DateTime.Now), JsonConvert.SerializeObject(new test_response("If you can see this text, this API works!")));
         }
     }
 

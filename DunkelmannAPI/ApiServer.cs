@@ -12,9 +12,9 @@ namespace DunkelmannAPI {
         public string ContentType {get;}
         public int StatusCode {get;}
 
-        public ResponseData(HttpListenerResponse resp, string data_to_send, string contentType, int statusCode){
+        public ResponseData(HttpListenerResponse resp, ResponseInfo data_to_send, string contentType, int statusCode){
             this.Response = resp;
-            this.Data = Encoding.UTF8.GetBytes(data_to_send);
+            this.Data = Encoding.UTF8.GetBytes(data_to_send.ResponseString);
             this.ContentType = contentType;
             this.StatusCode = statusCode;
 
@@ -22,6 +22,7 @@ namespace DunkelmannAPI {
             this.Response.ContentEncoding = Encoding.UTF8;
             this.Response.ContentLength64 = this.Data.LongLength;
             this.Response.StatusCode = this.StatusCode;
+            this.Response.AddHeader("Last-Modified", data_to_send.LastModified);
         }
     }
 
@@ -56,7 +57,7 @@ namespace DunkelmannAPI {
                 response.AddHeader("Access-Control-Allow-Origin", "*");
                 response.AddHeader("X-Powered-By", Program.displayableVersion);
 
-                ResponseData rd = new ResponseData(response, Program.ERROR_TEMPLATE("404 Not Found"), "text/html", 404);
+                ResponseData rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), Program.ERROR_TEMPLATE("404 Not Found")), "text/html", 404);
 
                 if(request.HttpMethod == "GET"){
                     switch(request.Url.AbsolutePath) {
@@ -65,7 +66,7 @@ namespace DunkelmannAPI {
                                 ts3version ver = new ts3version();
                                 rd = new ResponseData(response, await ver.getVersionInfo(), "application/json", 200);
                             } catch (Exception ex) {
-                                rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
+                                rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + ex.Message +"\"}"), "application/json", 500);
                             }
                             break;
                         case "/ts5version":
@@ -73,7 +74,7 @@ namespace DunkelmannAPI {
                                 ts5version ver = new ts5version();
                                 rd = new ResponseData(response, await ver.getVersionInfo(), "application/json", 200);
                             } catch (Exception ex) {
-                                rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
+                                rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + ex.Message +"\"}"), "application/json", 500);
                             }
                             break;
                         case "/status":
@@ -81,7 +82,7 @@ namespace DunkelmannAPI {
                                 status sta = new status();
                                 rd = new ResponseData(response, await sta.getServiceInfo(), "application/json", 200);
                             } catch (Exception ex) {
-                                rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
+                                rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + ex.Message +"\"}"), "application/json", 500);
                             }
                             break;
                         case "/test":
@@ -89,16 +90,16 @@ namespace DunkelmannAPI {
                                 test tst = new test();
                                 rd = new ResponseData(response, tst.testAPI(), "application/json", 200);
                             } catch (Exception ex) {
-                                rd = new ResponseData(response, "{\"errorMessage\": \"" + ex.Message +"\"}", "application/json", 500);
+                                rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + ex.Message +"\"}"), "application/json", 500);
                             }
                             break;
                     }
                 } else if (request.HttpMethod == "OPTIONS"){
-                    rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
+                    rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), Program.ERROR_TEMPLATE("405 Method Not Allowed")), "text/html", 405);
                 } else if (request.HttpMethod == "POST") {
-                    rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
+                    rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), Program.ERROR_TEMPLATE("405 Method Not Allowed")), "text/html", 405);
                 } else {
-                    rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
+                    rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), Program.ERROR_TEMPLATE("405 Method Not Allowed")), "text/html", 405);
                 }
                 
                 await response.OutputStream.WriteAsync(rd.Data, 0, rd.Data.Length);
