@@ -77,6 +77,14 @@ namespace DunkelmannAPI {
                                 rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + ex.Message +"\"}"), "application/json", 500);
                             }
                             break;
+                        case "/ts3badges":
+                            try {
+                                ts3badges bdg = new ts3badges();
+                                rd = new ResponseData(response, await bdg.getBadgeInfo(), "application/json", 200);
+                            } catch (Exception ex) {
+                                rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + ex.Message +"\"}"), "application/json", 500);
+                            }
+                            break;
                         case "/status":
                             try {
                                 status sta = new status();
