@@ -4,26 +4,34 @@ using Newtonsoft.Json;
 using ProtoBuf;
 
 namespace DunkelmannAPI {
-    class ts3badges {
+    class ts3badges : IEndpoint {
         const string ts3_badge_url = "https://badges-content.teamspeak.com/list";
 
         public ts3badges() {
 
         }
 
-        public async Task<ResponseInfo> getBadgeInfo() {
+        public async Task<ResponseInfo> generateResponse(RequestInfo info) {
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(ts3_badge_url);
+            if(info.IfModifiedSince != null){
+                req.Headers.Add("If-Modified-Since", info.IfModifiedSince);
+            }
             req.UserAgent = Program.displayableVersion;
             using (HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()) {
-                string responseStr = JsonConvert.SerializeObject(Serializer.Deserialize<BadgeResponse>(resp.GetResponseStream()));
-                
+                string responseStr = "";
+                bool cached = resp.StatusCode == HttpStatusCode.NotModified;
+
+                if(!cached) {
+                    responseStr = JsonConvert.SerializeObject(Serializer.Deserialize<BadgeResponse>(resp.GetResponseStream()));
+                }
+
             string lastModified = "";
             try {
                 lastModified = resp.GetResponseHeader("Last-Modified");
             } catch (System.Exception) {
                 lastModified = UtilMan.DateToHTTPFormat(Program.epoch);
             }
-                return new ResponseInfo(lastModified, responseStr);
+                return new ResponseInfo(lastModified, responseStr, cached ? 304 : 200);
             }
         }
     }

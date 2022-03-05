@@ -16,7 +16,7 @@ namespace DunkelmannAPI {
         }
     }
 
-    class ts5version {
+    class ts5version : IEndpoint {
         static PlatformURL[] ts5_version_urls = {new PlatformURL("windows"),
                                            new PlatformURL("linux"),
                                            new PlatformURL("mac")};
@@ -25,7 +25,7 @@ namespace DunkelmannAPI {
 
         }
 
-        public async Task<ResponseInfo> getVersionInfo() {
+        public async Task<ResponseInfo> generateResponse(RequestInfo info) {
             List<TS5PlatformInfo> list = new List<TS5PlatformInfo>();
             foreach(PlatformURL purl in ts5_version_urls){
                 list.Add(await getPlatformVersionInfo(purl.url, purl.platform_name));
@@ -39,7 +39,10 @@ namespace DunkelmannAPI {
                 lastModified = UtilMan.DateToHTTPFormat(Program.epoch);
             }
 
-            return new ResponseInfo(lastModified, JsonConvert.SerializeObject(resp));
+            string? ifModifiedSince = info.IfModifiedSince;
+            bool cached = UtilMan.isCached(ifModifiedSince, lastModified);
+
+            return new ResponseInfo(lastModified, cached ? "" : JsonConvert.SerializeObject(resp), cached ? 304 : 200);
         }
 
         private async Task<TS5PlatformInfo> getPlatformVersionInfo(string platform_url, string platform_name) {

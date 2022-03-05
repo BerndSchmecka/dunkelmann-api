@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 
 namespace DunkelmannAPI {
-    class status {
+    class status : IEndpoint {
 
         List<Service> serviceList = new List<Service>();
 
@@ -21,13 +21,16 @@ namespace DunkelmannAPI {
             serviceList.Add(new HTTPService("cloud", "https://cloud.dunkelmann.eu"));
         }
 
-        public async Task<ResponseInfo> getServiceInfo() {
+        public async Task<ResponseInfo> generateResponse(RequestInfo info) {
             List<StatusInfo> infoList = new List<StatusInfo>();
             foreach(Service svc in serviceList){
                 var status = await svc.checkService();
                 infoList.Add(new StatusInfo(svc.ServiceID, svc.URL, status.Item1, status.Item2));
             }
-            return new ResponseInfo(UtilMan.DateToHTTPFormat(DateTime.Now), JsonConvert.SerializeObject(infoList));
+            string lastModified = UtilMan.DateToHTTPFormat(DateTime.Now);
+            string? ifModifiedSince = info.IfModifiedSince;
+            bool cached = UtilMan.isCached(ifModifiedSince, lastModified);
+            return new ResponseInfo(lastModified, cached ? "" : JsonConvert.SerializeObject(infoList), cached ? 304 : 200);
         }
     }
 
