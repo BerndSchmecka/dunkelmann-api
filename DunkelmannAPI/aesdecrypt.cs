@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Text;
+using Ed25519;
 
 namespace DunkelmannAPI {
     class aesdecrypt : IEndpoint {
@@ -28,10 +29,14 @@ namespace DunkelmannAPI {
 
         public async Task<ResponseInfo> generateResponse(RequestInfo info) {
             if (this.encrypedMsg != null){
-                Aes aes = Aes.Create();
-                aes.Key = Convert.FromBase64String(Program.AES_STATIC_KEY);
-                var decrypted = aes.DecryptCbc(Convert.FromBase64String(this.encrypedMsg.msg), Convert.FromBase64String(this.encrypedMsg.iv), PaddingMode.PKCS7);
-                return new ResponseInfo(UtilMan.DateToHTTPFormat(DateTime.Now), JsonConvert.SerializeObject(new aesdecrypt_response(Encoding.UTF8.GetString(decrypted))), 200);
+                if (Signer.Validate(Convert.FromBase64String(this.encrypedMsg.sign), Encoding.UTF8.GetBytes($"{this.encrypedMsg.iv}dunkelmannMessage{this.encrypedMsg.msg}"), Convert.FromBase64String(Program.ED_PUBLIC_KEY))){
+                    Aes aes = Aes.Create();
+                    aes.Key = Convert.FromBase64String(Program.AES_STATIC_KEY);
+                    var decrypted = aes.DecryptCbc(Convert.FromBase64String(this.encrypedMsg.msg), Convert.FromBase64String(this.encrypedMsg.iv), PaddingMode.PKCS7);
+                    return new ResponseInfo(UtilMan.DateToHTTPFormat(DateTime.Now), JsonConvert.SerializeObject(new aesdecrypt_response(Encoding.UTF8.GetString(decrypted))), 200);
+                } else {
+                    throw new Exception("Invalid sign provided!");
+                }
             } else {
                 throw new Exception(this.error_msg);
             }
@@ -41,10 +46,12 @@ namespace DunkelmannAPI {
     public class aesdecrypt_request {
         public string iv {get; set;}
         public string msg {get; set;}
+        public string sign {get; set;}
 
-        public aesdecrypt_request(string iv, string msg){
+        public aesdecrypt_request(string iv, string msg, string sign){
             this.iv = iv;
             this.msg = msg;
+            this.sign = sign;
         }
     }
 

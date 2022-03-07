@@ -12,6 +12,7 @@ namespace DunkelmannAPI
         public static DateTime epoch = new System.DateTime(1970,1,1,0,0,0,DateTimeKind.Utc);
 
         public static string AES_STATIC_KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+        public static string ED_PUBLIC_KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
         static void Main(string[] args)
         {
