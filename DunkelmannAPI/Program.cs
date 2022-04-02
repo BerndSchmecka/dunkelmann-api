@@ -29,13 +29,27 @@ namespace DunkelmannAPI
             var config = Newtonsoft.Json.JsonConvert.DeserializeObject<Config>(new System.IO.StreamReader(configStream).ReadToEnd());
             configStream.Close();
 
+            //check if config is null, otherwise abort
+            if (config == null)
+            {
+                System.Console.WriteLine("Config is null");
+                return;
+            }
+
+            //check if configVersion is 1, otherwise abort
+            if(config.configVersion != 1)
+            {
+                System.Console.WriteLine("Config version is not 1, aborting");
+                return;
+            }
+
             //set static key
             AES_STATIC_KEY = config.aesStaticKey;
             ED_PUBLIC_KEY = config.edPublicKey;
 
             //Print out first 5 chars of the keys
-            System.Console.WriteLine("AES_STATIC_KEY: " + AES_STATIC_KEY.Substring(0, 5));
-            System.Console.WriteLine("ED_PUBLIC_KEY: " + ED_PUBLIC_KEY.Substring(0, 5));
+            System.Console.WriteLine($"AES_STATIC_KEY: {AES_STATIC_KEY.Substring(0, 5)} ...");
+            System.Console.WriteLine($"ED_PUBLIC_KEY: {ED_PUBLIC_KEY.Substring(0, 5)} ...");
 
             Console.WriteLine("Starting server...");
             ApiServer server = new ApiServer();
