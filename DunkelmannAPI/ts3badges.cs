@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProtoBuf;
@@ -13,7 +15,7 @@ namespace DunkelmannAPI {
 
         }
 
-        public async Task<ResponseInfo> generateResponse(RequestInfo info) {
+        /*public async Task<ResponseInfo> generateResponse(RequestInfo info) {
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(ts3_badge_url);
             req.UserAgent = Program.displayableVersion;
             using (HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()) {
@@ -23,6 +25,17 @@ namespace DunkelmannAPI {
                 var bodyWithHeaders = new BodyWithHeaders(responseStr, headers);
                 return new ResponseInfo(JsonConvert.SerializeObject(bodyWithHeaders), 200);
             }
+        }*/
+
+        //Get badge info from ts3_badge_url and return it as a json string using HttpClient
+        public async Task<ResponseInfo> generateResponse(RequestInfo info) {
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", Program.displayableVersion);
+            var response = await client.GetAsync(ts3_badge_url);
+            var responseStr = Serializer.Deserialize<BadgeResponse>(await response.Content.ReadAsStreamAsync());
+            HttpResponseHeaders headers = response.Headers;
+            var bodyWithHeaders = new BodyWithHeaders(responseStr, headers);
+            return new ResponseInfo(JsonConvert.SerializeObject(bodyWithHeaders), 200);
         }
     }
 
