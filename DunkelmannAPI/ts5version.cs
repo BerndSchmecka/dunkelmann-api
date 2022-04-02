@@ -3,6 +3,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Net.Http.Headers;
+using System.Net.Http;
 
 namespace DunkelmannAPI {
 
@@ -35,16 +37,17 @@ namespace DunkelmannAPI {
             return new ResponseInfo(JsonConvert.SerializeObject(resp), 200);
         }
 
+        //take a platform_url and a platform_name and return a TS5PlatformInfo
+        //use HttpClient to get the json from the url
+        //use JsonConvert to deserialize the json
+        //return a TS5PlatformInfo
         private async Task<TS5PlatformInfo> getPlatformVersionInfo(string platform_url, string platform_name) {
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(platform_url);
-            req.UserAgent = "teamspeak.downloader/1.0";
-            req.Headers.Add("Authorization", "Basic dGVhbXNwZWFrNTpMRlo2Wl5rdkdyblh+YW4sJEwjNGd4TDMnYTcvYVtbJl83PmF0fUEzQVJSR1k=");
-            using (HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()) {
-                using (StreamReader sr = new StreamReader(resp.GetResponseStream())){
-                    TS5PlatformInfo response = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await sr.ReadToEndAsync()), platform_name, resp.Headers);
-                    return response;
-                }
-            }
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", "Basic dGVhbXNwZWFrNTpMRlo2Wl5rdkdyblh+YW4sJEwjNGd4TDMnYTcvYVtbJl83PmF0fUEzQVJSR1k=");
+            client.DefaultRequestHeaders.Add("User-Agent", "teamspeak.downloader/1.0");
+            HttpResponseMessage response = await client.GetAsync(platform_url);
+            TS5PlatformInfo info = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await response.Content.ReadAsStringAsync()), platform_name, response.Headers);
+            return info;
         }
     }
 
@@ -59,15 +62,12 @@ namespace DunkelmannAPI {
     public class TS5PlatformInfo {
         public string platformName {get; set;}
         public TS5VersionInfo platformInfo {get; set;}
-         public Dictionary<string, string> headers {get; private set;}
+         public HttpResponseHeaders headers {get; private set;}
 
-        public TS5PlatformInfo(TS5VersionInfo info, string name, WebHeaderCollection wHeaders) {
+        public TS5PlatformInfo(TS5VersionInfo info, string name, HttpResponseHeaders wHeaders) {
             this.platformInfo = info;
             this.platformName = name;
-            this.headers = new Dictionary<string, string>();
-            foreach(string key in wHeaders.AllKeys){
-                this.headers.Add(key, wHeaders[key]);
-            }
+            this.headers = wHeaders;
         }
     }
 
