@@ -29,7 +29,7 @@ namespace DunkelmannAPI {
 
         public async Task<ResponseInfo> generateResponse(RequestInfo info) {
             if (this.encrypedMsg != null){
-                if (Signer.Validate(Convert.FromBase64String(this.encrypedMsg.sign), Encoding.UTF8.GetBytes($"{this.encrypedMsg.iv}dunkelmannMessage{this.encrypedMsg.msg}"), Convert.FromBase64String(Program.ED_PUBLIC_KEY))){
+                if (await Signer.ValidateAsync(Convert.FromBase64String(this.encrypedMsg.sign), Encoding.UTF8.GetBytes($"{this.encrypedMsg.iv}dunkelmannMessage{this.encrypedMsg.msg}"), Convert.FromBase64String(Program.ED_PUBLIC_KEY))){
                     Aes aes = Aes.Create();
                     aes.Key = Convert.FromBase64String(Program.AES_STATIC_KEY);
                     var decrypted = aes.DecryptCbc(Convert.FromBase64String(this.encrypedMsg.msg), Convert.FromBase64String(this.encrypedMsg.iv), PaddingMode.PKCS7);

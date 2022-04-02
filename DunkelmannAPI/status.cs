@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using System.Net.Http;
 
 namespace DunkelmannAPI {
     class status : IEndpoint {
@@ -41,25 +42,18 @@ namespace DunkelmannAPI {
             this.URL = url;
         }
 
-        public abstract Task<(ushort, string)> checkService();
+        public abstract Task<(ushort, string?)> checkService();
     }
 
     class HTTPService : Service {
 
         public HTTPService(string serviceId, string url) : base(serviceId, url) {}
 
-        public override async Task<(ushort, string)> checkService() {
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(this.URL);
+        public override async Task<(ushort, string?)> checkService() {
+            HttpClient client = new HttpClient();
             try {
-                using(HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()){
-                    return ((ushort)resp.StatusCode, resp.StatusDescription);
-                }
-            } catch (WebException we){
-                var response = we.Response as HttpWebResponse;
-                if(response != null){
-                    return ((ushort)response.StatusCode, response.StatusDescription);
-                } else {
-                    return (0, we.Message);
+                using(HttpResponseMessage resp = await client.GetAsync(this.URL)){
+                    return ((ushort)resp.StatusCode, resp.ReasonPhrase);
                 }
             } catch (Exception ex){
                 return (0, ex.Message);
@@ -70,7 +64,7 @@ namespace DunkelmannAPI {
     class SMTPService : Service {
         public SMTPService(string serviceId, string url) : base(serviceId, url) {}
 
-        public override async Task<(ushort, string)> checkService() {
+        public override async Task<(ushort, string?)> checkService() {
             string result = String.Empty;
 
             try {
@@ -109,9 +103,9 @@ namespace DunkelmannAPI {
         public string id {get; set;}
         public string url {get; set;}
         public ushort statusCode  {get; private set;}
-        public string statusDesc {get; set;}
+        public string? statusDesc {get; set;}
 
-        public StatusInfo(string id, string url, ushort statusCode, string statusDesc){
+        public StatusInfo(string id, string url, ushort statusCode, string? statusDesc){
             this.id = id;
             this.url = url;
             this.statusCode = statusCode;
