@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Net;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -13,25 +15,13 @@ namespace DunkelmannAPI {
 
         public async Task<ResponseInfo> generateResponse(RequestInfo info) {
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(ts3_badge_url);
-            if(info.IfModifiedSince != null){
-                req.Headers.Add("If-Modified-Since", info.IfModifiedSince);
-            }
             req.UserAgent = Program.displayableVersion;
             using (HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()) {
-                string responseStr = "";
-                bool cached = resp.StatusCode == HttpStatusCode.NotModified;
-
-                if(!cached) {
-                    responseStr = JsonConvert.SerializeObject(Serializer.Deserialize<BadgeResponse>(resp.GetResponseStream()));
-                }
-
-            string lastModified = "";
-            try {
-                lastModified = resp.GetResponseHeader("Last-Modified");
-            } catch (System.Exception) {
-                lastModified = UtilMan.DateToHTTPFormat(Program.epoch);
-            }
-                return new ResponseInfo(lastModified, responseStr, cached ? 304 : 200);
+                var responseStr = Serializer.Deserialize<BadgeResponse>(resp.GetResponseStream());
+                WebHeaderCollection headers = resp.Headers;
+                
+                var bodyWithHeaders = new BodyWithHeaders(responseStr, headers);
+                return new ResponseInfo(JsonConvert.SerializeObject(bodyWithHeaders), 200);
             }
         }
     }

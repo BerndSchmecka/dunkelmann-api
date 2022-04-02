@@ -27,10 +27,7 @@ namespace DunkelmannAPI {
                 var status = await svc.checkService();
                 infoList.Add(new StatusInfo(svc.ServiceID, svc.URL, status.Item1, status.Item2));
             }
-            string lastModified = UtilMan.DateToHTTPFormat(DateTime.Now);
-            string? ifModifiedSince = info.IfModifiedSince;
-            bool cached = UtilMan.isCached(ifModifiedSince, lastModified);
-            return new ResponseInfo(lastModified, cached ? "" : JsonConvert.SerializeObject(infoList), cached ? 304 : 200);
+            return new ResponseInfo(JsonConvert.SerializeObject(infoList), 200);
         }
     }
 
