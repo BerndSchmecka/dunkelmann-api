@@ -46,7 +46,7 @@ namespace DunkelmannAPI {
             client.DefaultRequestHeaders.Add("Authorization", "Basic dGVhbXNwZWFrNTpMRlo2Wl5rdkdyblh+YW4sJEwjNGd4TDMnYTcvYVtbJl83PmF0fUEzQVJSR1k=");
             client.DefaultRequestHeaders.Add("User-Agent", "teamspeak.downloader/1.0");
             HttpResponseMessage response = await client.GetAsync(platform_url);
-            TS5PlatformInfo info = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await response.Content.ReadAsStringAsync()), platform_name, response.Headers);
+            TS5PlatformInfo info = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await response.Content.ReadAsStringAsync()), platform_name, response.Content.Headers, response.Headers);
             return info;
         }
     }
@@ -62,12 +62,12 @@ namespace DunkelmannAPI {
     public class TS5PlatformInfo {
         public string platformName {get; set;}
         public TS5VersionInfo platformInfo {get; set;}
-         public HttpResponseHeaders headers {get; private set;}
+        public Dictionary<string, IEnumerable<string>> headers {get; private set;}
 
-        public TS5PlatformInfo(TS5VersionInfo info, string name, HttpResponseHeaders wHeaders) {
+        public TS5PlatformInfo(TS5VersionInfo info, string name, HttpContentHeaders cHeaders, HttpResponseHeaders rHeaders) {
             this.platformInfo = info;
             this.platformName = name;
-            this.headers = wHeaders;
+            this.headers = UtilMan.JoinHeaders(cHeaders, rHeaders);
         }
     }
 

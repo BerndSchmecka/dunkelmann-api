@@ -6,11 +6,11 @@ using System.Net.Http.Headers;
 namespace DunkelmannAPI {
     public class BodyWithHeaders {
         public object body {get; private set;}
-        public HttpResponseHeaders headers {get; private set;}
+        public Dictionary<string, IEnumerable<string>> headers {get; private set;}
 
-        public BodyWithHeaders(object body, HttpResponseHeaders headers) {
+        public BodyWithHeaders(object body, HttpContentHeaders contentHeaders, HttpResponseHeaders responseHeaders) {
             this.body = body;
-            this.headers = headers;
+            this.headers = UtilMan.JoinHeaders(contentHeaders, responseHeaders);
         }
     }
 }

@@ -33,8 +33,9 @@ namespace DunkelmannAPI {
             client.DefaultRequestHeaders.Add("User-Agent", Program.displayableVersion);
             var response = await client.GetAsync(ts3_badge_url);
             var responseStr = Serializer.Deserialize<BadgeResponse>(await response.Content.ReadAsStreamAsync());
-            HttpResponseHeaders headers = response.Headers;
-            var bodyWithHeaders = new BodyWithHeaders(responseStr, headers);
+            HttpContentHeaders contentHeaders = response.Content.Headers;
+            HttpResponseHeaders responseHeaders = response.Headers;
+            var bodyWithHeaders = new BodyWithHeaders(responseStr, contentHeaders, responseHeaders);
             return new ResponseInfo(JsonConvert.SerializeObject(bodyWithHeaders), 200);
         }
     }

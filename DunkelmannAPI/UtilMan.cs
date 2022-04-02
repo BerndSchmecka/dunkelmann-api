@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Net.Http.Headers;
 
 namespace DunkelmannAPI {
     public static class UtilMan {
@@ -28,6 +30,18 @@ namespace DunkelmannAPI {
                     return false;
                 }
             }
+        }
+
+        //Join HttpContentHeaders and HttpResponseHeaders into a single Dictionary<string, IEnumerable<string>> object
+        public static Dictionary<string, IEnumerable<string>> JoinHeaders(HttpContentHeaders contentHeaders, HttpResponseHeaders responseHeaders) {
+            Dictionary<string, IEnumerable<string>> headers = new Dictionary<string, IEnumerable<string>>();
+            foreach (KeyValuePair<string, IEnumerable<string>> entry in contentHeaders) {
+                headers.Add(entry.Key, entry.Value);
+            }
+            foreach (KeyValuePair<string, IEnumerable<string>> entry in responseHeaders) {
+                headers.Add(entry.Key, entry.Value);
+            }
+            return headers;
         }
     }
 }
