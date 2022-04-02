@@ -33,7 +33,7 @@ namespace DunkelmannAPI {
                     Aes aes = Aes.Create();
                     aes.Key = Convert.FromBase64String(Program.AES_STATIC_KEY);
                     var decrypted = aes.DecryptCbc(Convert.FromBase64String(this.encrypedMsg.msg), Convert.FromBase64String(this.encrypedMsg.iv), PaddingMode.PKCS7);
-                    return new ResponseInfo(UtilMan.DateToHTTPFormat(DateTime.Now), JsonConvert.SerializeObject(new aesdecrypt_response(Encoding.UTF8.GetString(decrypted))), 200);
+                    return new ResponseInfo(JsonConvert.SerializeObject(new aesdecrypt_response(Encoding.UTF8.GetString(decrypted))), 200);
                 } else {
                     throw new Exception("Invalid sign provided!");
                 }

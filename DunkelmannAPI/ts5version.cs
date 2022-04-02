@@ -32,17 +32,7 @@ namespace DunkelmannAPI {
             }
             TS5VersionResponse resp = new TS5VersionResponse(list);
 
-            string lastModified = "";
-            try {
-                lastModified = list[0].lastModified;
-            } catch (System.Exception) {
-                lastModified = UtilMan.DateToHTTPFormat(Program.epoch);
-            }
-
-            string? ifModifiedSince = info.IfModifiedSince;
-            bool cached = UtilMan.isCached(ifModifiedSince, lastModified);
-
-            return new ResponseInfo(lastModified, cached ? "" : JsonConvert.SerializeObject(resp), cached ? 304 : 200);
+            return new ResponseInfo(JsonConvert.SerializeObject(resp), 200);
         }
 
         private async Task<TS5PlatformInfo> getPlatformVersionInfo(string platform_url, string platform_name) {
@@ -51,7 +41,7 @@ namespace DunkelmannAPI {
             req.Headers.Add("Authorization", "Basic dGVhbXNwZWFrNTpMRlo2Wl5rdkdyblh+YW4sJEwjNGd4TDMnYTcvYVtbJl83PmF0fUEzQVJSR1k=");
             using (HttpWebResponse resp = (HttpWebResponse) await req.GetResponseAsync()) {
                 using (StreamReader sr = new StreamReader(resp.GetResponseStream())){
-                    TS5PlatformInfo response = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await sr.ReadToEndAsync()), platform_name, resp.GetResponseHeader("Last-Modified"));
+                    TS5PlatformInfo response = new TS5PlatformInfo(JsonConvert.DeserializeObject<TS5VersionInfo>(await sr.ReadToEndAsync()), platform_name, resp.Headers);
                     return response;
                 }
             }
@@ -69,12 +59,15 @@ namespace DunkelmannAPI {
     public class TS5PlatformInfo {
         public string platformName {get; set;}
         public TS5VersionInfo platformInfo {get; set;}
-        public string lastModified {get; set;}
+         public Dictionary<string, string> headers {get; private set;}
 
-        public TS5PlatformInfo(TS5VersionInfo info, string name, string lastModified) {
+        public TS5PlatformInfo(TS5VersionInfo info, string name, WebHeaderCollection wHeaders) {
             this.platformInfo = info;
             this.platformName = name;
-            this.lastModified = lastModified;
+            this.headers = new Dictionary<string, string>();
+            foreach(string key in wHeaders.AllKeys){
+                this.headers.Add(key, wHeaders[key]);
+            }
         }
     }
 

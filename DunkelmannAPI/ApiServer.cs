@@ -13,14 +13,13 @@ namespace DunkelmannAPI {
 
         public ResponseData(HttpListenerResponse resp, ResponseInfo data_to_send, string contentType){
             this.Response = resp;
-            this.Data = Encoding.UTF8.GetBytes(data_to_send.ResponseString);
+            this.Data = Encoding.UTF8.GetBytes(data_to_send.responsePayload);
             this.ContentType = contentType;
 
             this.Response.ContentType = this.ContentType;
             this.Response.ContentEncoding = Encoding.UTF8;
             this.Response.ContentLength64 = this.Data.LongLength;
             this.Response.StatusCode = data_to_send.StatusCode;
-            this.Response.AddHeader("Last-Modified", data_to_send.LastModified);
         }
     }
 
@@ -55,7 +54,7 @@ namespace DunkelmannAPI {
                 response.AddHeader("Access-Control-Allow-Origin", "*");
                 response.AddHeader("X-Powered-By", Program.displayableVersion);
 
-                ResponseData rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), Program.ERROR_TEMPLATE("404 Not Found"), 404), "text/html");
+                ResponseData rd = new ResponseData(response, new ResponseInfo(Program.ERROR_TEMPLATE("404 Not Found"), 404), "text/html");
 
                 if(request.HttpMethod == "GET"){
                     switch(request.Url.AbsolutePath) {
@@ -76,7 +75,7 @@ namespace DunkelmannAPI {
                             break;
                     }
                 } else if (request.HttpMethod == "OPTIONS"){
-                    rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), Program.ERROR_TEMPLATE("405 Method Not Allowed"), 405), "text/html");
+                    rd = new ResponseData(response, new ResponseInfo(Program.ERROR_TEMPLATE("405 Method Not Allowed"), 405), "text/html");
                 } else if (request.HttpMethod == "POST") {
                     switch(request.Url.AbsolutePath) {
                         case "/aesdecrypt":
@@ -84,7 +83,7 @@ namespace DunkelmannAPI {
                             break;
                     }
                 } else {
-                    rd = new ResponseData(response, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), Program.ERROR_TEMPLATE("405 Method Not Allowed"), 405), "text/html");
+                    rd = new ResponseData(response, new ResponseInfo(Program.ERROR_TEMPLATE("405 Method Not Allowed"), 405), "text/html");
                 }
                 
                 await response.OutputStream.WriteAsync(rd.Data, 0, rd.Data.Length);
@@ -96,12 +95,12 @@ namespace DunkelmannAPI {
                 return new ResponseData(resp, await ep.generateResponse(new RequestInfo(req)), "application/json");
             } catch (WebException wex) {
                 if(((HttpWebResponse)wex.Response).StatusCode == HttpStatusCode.NotModified) {
-                    return new ResponseData(resp, new ResponseInfo(UtilMan.DateToHTTPFormat(((HttpWebResponse)wex.Response).LastModified), "", 304), "application/json");
+                    return new ResponseData(resp, new ResponseInfo("", 304), "application/json");
                 } else {
-                    return new ResponseData(resp, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + wex.Message +"\"}", 500), "application/json");
+                    return new ResponseData(resp, new ResponseInfo("{\"errorMessage\": \"" + wex.Message +"\"}", 500), "application/json");
                 }
             } catch (Exception ex) {
-                return new ResponseData(resp, new ResponseInfo(UtilMan.DateToHTTPFormat(Program.buildDate), "{\"errorMessage\": \"" + ex.Message +"\"}", 500), "application/json");
+                return new ResponseData(resp, new ResponseInfo("{\"errorMessage\": \"" + ex.Message +"\"}", 500), "application/json");
             }
         }
 

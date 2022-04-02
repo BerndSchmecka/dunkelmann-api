@@ -1,11 +1,12 @@
+using System.Collections.Specialized;
 using System.Net;
 
 namespace DunkelmannAPI {
     public class RequestInfo {
-        public string? IfModifiedSince {get; private set;}
+        public NameValueCollection requestHeaders {get;}
 
         public RequestInfo(HttpListenerRequest req) {
-            this.IfModifiedSince = req.Headers.Get("If-Modified-Since");
+            this.requestHeaders = req.Headers;
         }
     }
 }
