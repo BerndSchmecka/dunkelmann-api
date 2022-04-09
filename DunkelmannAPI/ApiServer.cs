@@ -75,7 +75,9 @@ namespace DunkelmannAPI {
                             break;
                     }
                 } else if (request.HttpMethod == "OPTIONS"){
-                    rd = new ResponseData(response, new ResponseInfo(Program.ERROR_TEMPLATE("405 Method Not Allowed"), 405), "text/html");
+                    rd = new ResponseData(response, new ResponseInfo("", 204), "application/json");
+                    response.AddHeader("Access-Control-Allow-Methods", "GET, OPTIONS, POST");
+                    response.AddHeader("Access-Control-Allow-Headers", "Content-Type");
                 } else if (request.HttpMethod == "POST") {
                     switch(request.Url.AbsolutePath) {
                         case "/aesdecrypt":
